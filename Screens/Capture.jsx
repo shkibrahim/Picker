@@ -1,220 +1,184 @@
 import React from 'react';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import {useEffect, useState, useRef, useCallback} from 'react';
 
 import {
-    View,
-    Text,
-    Pressable, KeyboardAvoidingView,
-    StyleSheet, ActivityIndicator,
-
-    ScrollView, Image,
-    ImageBackground,
-    TextInput
-
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+  Image,
 } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
-import { CameraDevice, useCameraDevices, Camera, useCameraDevice } from 'react-native-vision-camera'
+import {useIsFocused} from '@react-navigation/native';
+import {
+  CameraDevice,
+  useCameraDevices,
+  Camera,
+  useCameraDevice,
+} from 'react-native-vision-camera';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import RNFS from 'react-native-fs';
-const Capture = ({ navigation, route }) => {
 
-    const isFocused = useIsFocused();
+const Capture = ({navigation, route}) => {
+  const isFocused = useIsFocused();
 
+  useEffect(() => {
+    async function getPermission() {
+      const newcamerapermission = await Camera.requestCameraPermission();
+      console.log(newcamerapermission);
+    }
+    getPermission();
+  }, []);
 
-    useEffect(() => {
-        async function getPermission() {
-            const newcamerapermission = await Camera.requestCameraPermission();
-            console.log(newcamerapermission)
+  const camera = useRef(null);
+  const [isActive, serisActive] = useState(true);
+  const [isCameraInitialized, setIsCameraInitialized] = useState(true);
+
+  const [capturedImage, setCapturedImage] = useState();
+  const [path, setpath] = useState();
+  const [showcamera, setshowcamera] = useState(true);
+  const device = useCameraDevice('back');
+
+  const takePhotos = async () => {
+    if (camera !== null) {
+      try {
+        const photo = await camera.current?.takePhoto({
+          qualityPrioritization: 'quality',
+
+          enableAutoRedEyeReduction: true,
+        });
+
+        if (photo && photo.path) {
+          const base64Image = await RNFS.readFile(photo.path, 'base64');
+
+          setpath(photo);
+          setShowDownloadIcon(true);
+          setshowcamera(true);
+          setCapturedImage(`data:image/jpeg;base64,${base64Image}`);
+        } else {
+          console.error('Invalid photo object:', photo);
         }
-        getPermission()
-    }, [])
-    // const device = useCameraDevices('front');
-    const camera= useRef(null);
-    const [isActive, serisActive] = useState(true)
-    const [isCameraInitialized, setIsCameraInitialized] = useState(true);
-    const onCameraInitialized = useCallback(() => {
-        console.log('Camera initialized!');
-        setIsCameraInitialized(true);
+      } catch (error) {
+        console.error('Error taking photo:', error);
+      }
+    }
+  };
 
-    }, []);
+  if (device == null) return <ActivityIndicator />;
+  useEffect(() => {
+    setIsCameraInitialized(false);
+    setIsCameraInitialized(true);
+  }, []);
 
+  const {Images} = route.params;
 
-    const [capturedImage, setCapturedImage] = useState();
-    const [path, setpath] = useState()
-    const [showcamera, setshowcamera] = useState(true)
-    const device = useCameraDevice('back')
-    const takePhotos = async () => {
-        if (camera !== null) {
-            try {
-                // const photo = await cameraRef.current.takePhoto({});
-               const photo = Platform.OS === 'android' ? await camera.current?.takePhoto({
-                    qualityPrioritization: 'quality',
+  const [showDownloadIcon, setShowDownloadIcon] = useState(false);
+  const handleDownload = () => {
+    navigation.navigate('Review', {
+      Images: capturedImage,
+    });
+    setShowDownloadIcon(false);
+  };
 
-                    enableAutoRedEyeReduction: true
-                }) : await camera.current?.takePhoto({
-                    qualityPrioritization: 'quality',
+  const [photo1, setPhoto1] = useState(false);
 
-                    enableAutoRedEyeReduction: true
-                });
-                // if(isCameraInitialized==true){
-                //     takePhotos();
-                //   }
-                if (photo && photo.path) {
-                    const base64Image = await RNFS.readFile(photo.path, 'base64');
+  useEffect(() => {
+    setPhoto1(prevPhoto1 => !prevPhoto1);
+  }, []);
 
-                    setpath(photo);
-                    setShowDownloadIcon(true);
-                    setshowcamera(true)
-                    setCapturedImage(`data:image/jpeg;base64,${base64Image}`);
-                    //   console.log(photo.path);
-                } else {
-                    console.error('Invalid photo object:', photo);
+  const action = async () => {
+    navigation.navigate('Wait', {
+      Images: Images,
+    });
+  };
+  return (
+    <View style={{backgroundColor: 'white', height: '100%'}}>
+      <View
+        style={{
+          justifyContent: 'space-between',
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: 12,
+        }}>
+        <Pressable style={{}} onPress={() => navigation.navigate('Menu')}>
+          <MaterialIcons name="menu" size={20} color={'black'} />
+        </Pressable>
+        <Text style={{color: 'black', fontWeight: 'bold', fontSize: 16}}>
+          Capture
+        </Text>
+        <MaterialIcons name="menu" size={20} color={'transparent'} />
+      </View>
 
-                }
-            } catch (error) {
-                console.error('Error taking photo:', error);
-            }
-        }
-        if (camera===null ){
-            Alert('nhi arha')
-        }
+      <Pressable
+        style={{
+          backgroundColor: '#0095FF',
+          alignSelf: 'center',
+          padding: 12,
+          marginTop: 33,
+          borderRadius: 12,
+        }}
+        onPress={action}>
+        <Text style={{color: 'white'}}>Start Camera</Text>
+      </Pressable>
 
-    };
-
-    if (device == null) return <ActivityIndicator />
-    useEffect(() => {
-        setIsCameraInitialized(false);
-        setIsCameraInitialized(true);
-    }, []);
-
-    const { Images } = route.params
-
-
-
-
-    const [showDownloadIcon, setShowDownloadIcon] = useState(false);
-    const handleDownload = () => {
-
-
-        // Implement download logic here
-        navigation.navigate('Review', {
-            Images: capturedImage,
-
-        })
-
-
-    };
-
-
-
-    const [photo1, setPhoto1] = useState(true);
-    const [isFocused1, setIsFocused] = useState(true);
-
-    //   useEffect(() => {
-    //     const interval = setInterval(() => {
-    //       setIsFocused((prevIsFocused) => !prevIsFocused);
-    //     }, 5000);
-
-    //     return () => clearInterval(interval);
-    //   }, []);
-    // useEffect(() => {
-    //     // Set photo to true for the first 5 seconds
-    //     const firstInterval = setInterval(() => {
-    //         setPhoto1(true);
-    //     }, 1000);
-
-    //     // Set photo to false for the next 5 seconds
-    //     const secondInterval = setInterval(() => {
-    //         setPhoto1(false);
-    //     }, 1200);
-
-    //     // Clear intervals when the component unmounts to prevent memory leaks
-    //     return () => {
-    //         clearInterval(firstInterval);
-    //         clearInterval(secondInterval);
-    //     };
-    // }, []);
-    return (
-        <View style={{ backgroundColor: 'white', height: '100%', }}>
-
-
-            <View style={{ justifyContent: 'space-between', flexDirection: "row", alignItems: "center", padding: 12 }}>
-                <Pressable style={{ height: 20, width: 20 }}
-                    onPress={() => navigation.replace('Login')}>
-                    <MaterialIcons name="menu" size={20} color={'black'} />
-                </Pressable>
-                <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 16 }}>Capture</Text>
-                <MaterialIcons name="menu" size={20} color={'transparent'} />
-            </View>
-
-
-
-
-            {/* {isFocused &&  ( */}
-            <View>
-      {photo1 && (
+      <View style={{}}>
         <Camera
-          style={{ height: 300, marginTop: 150 }}
-          device={device} // Replace with your device value
+          style={{height: 300, marginTop: 150}}
+          device={device}
           isActive={true}
-          ref={camera} // Replace with your camera reference
-          photo={true}
+          ref={camera}
+          photo={photo1}
         />
-      )}
-      {/* Other components or content */}
+      </View>
+      {/* )} */}
+
+      <View style={styles.container}>
+        {Images !== null && (
+          <Image source={{uri: Images}} style={styles.image} />
+        )}
+      </View>
+      <View style={styles.cameraControls}>
+        <Pressable
+          style={styles.cameraButton}
+          onPress={showDownloadIcon ? handleDownload : takePhotos}>
+          <MaterialIcons
+            name={showDownloadIcon ? 'download' : 'camera-alt'}
+            size={30}
+            color={'green'}
+          />
+        </Pressable>
+      </View>
     </View>
-
-
-
-            <View style={styles.container}>
-
-                <Image
-                    source={{ uri: Images }}
-                    style={styles.image}
-
-                />
-
-            </View>
-
-            <View style={styles.cameraControls}>
-                <Pressable style={styles.cameraButton} onPress={showDownloadIcon ? handleDownload : takePhotos}>
-                    <MaterialIcons name={showDownloadIcon ? 'download' : 'camera-alt'} size={30} color={'green'} />
-                </Pressable>
-            </View>
-
-
-        </View>
-    );
+  );
 };
 
 export default Capture;
 const styles = StyleSheet.create({
-
-
-    cameraControls: {
-        position: 'absolute',
-        bottom: 16,
-        width: '100%',
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    cameraButton: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#D9D9D9',
-    },
-    container: {
-        alignSelf: "center",
-        justifyContent: 'center', position: "absolute",
-        alignItems: 'center', top: 220
-    },
-    image: {
-        width: 250,
-        height: 240,
-
-    },
-
+  cameraControls: {
+    position: 'absolute',
+    bottom: 16,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  cameraButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D9D9D9',
+  },
+  container: {
+    alignSelf: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    alignItems: 'center',
+    top: 300,
+  },
+  image: {
+    width: 250,
+    height: 240,
+  },
 });

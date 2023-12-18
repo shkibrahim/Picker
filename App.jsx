@@ -1,28 +1,22 @@
-import {LogBox, Platform,PermissionsAndroid } from 'react-native';
+import {LogBox, Platform, PermissionsAndroid} from 'react-native';
 import {useEffect, useState} from 'react';
 import 'react-native-gesture-handler';
 LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
 LogBox.ignoreLogs([{level: 'error'}]);
 LogBox.ignoreAllLogs();
 
-
 import * as React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 
-
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-
-
-
-
-
 
 import Menu from './Screens/Menu';
 import Login from './Screens/Login';
 
 import Capture from './Screens/Capture';
 import Review from './Screens/Review';
-import { request, check, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import Wait from './Screens/Wait';
+import {request, check, PERMISSIONS, RESULTS} from 'react-native-permissions';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,7 +28,7 @@ function App() {
 
         if (Platform.OS === 'android') {
           permissionStatus = await PermissionsAndroid.check(
-            PermissionsAndroid.PERMISSIONS.CAMERA
+            PermissionsAndroid.PERMISSIONS.CAMERA,
           );
 
           if (permissionStatus !== PermissionsAndroid.RESULTS.GRANTED) {
@@ -46,7 +40,7 @@ function App() {
                 buttonNeutral: 'Ask Me Later',
                 buttonNegative: 'Cancel',
                 buttonPositive: 'OK',
-              }
+              },
             );
 
             if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
@@ -75,31 +69,22 @@ function App() {
     };
 
     checkCameraPermission();
-  }, []); // Empty dependency array ensures the effect runs only once on mount
+  }, []);
 
-  // useEffect(() => {
-  //   if (Platform.OS === 'android' || Platform.OS  === 'ios' ) {
-  //     SplashScreen.hide();
-  //   }
-  // }, []);
+
   return (
-
-  
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName= 'Login'
+        initialRouteName="Login"
         screenOptions={{headerShown: false}}>
-   
-
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Menu" component={Menu} />
         <Stack.Screen name="Capture" component={Capture} />
         <Stack.Screen name="Review" component={Review} />
+        <Stack.Screen name="Wait" component={Wait} />
       </Stack.Navigator>
     </NavigationContainer>
-   
   );
-
 }
 
 export default App;
